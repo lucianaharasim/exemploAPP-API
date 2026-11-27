@@ -6,6 +6,8 @@ import com.android.volley.Request;
 import com.android.volley.RequestQueue;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.JsonArrayRequest;
+import com.android.volley.toolbox.JsonObjectRequest;
+import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
 
 import org.json.JSONArray;
@@ -31,7 +33,38 @@ public class ApiClient {
 
         fila.add(request);
 
+    }
+    public void buscarProduto(long id,Sucesso<Produto> sucesso,Falha falha){
+        JsonObjectRequest request = new JsonObjectRequest(
+                Request.Method.GET,BASE_URL + "/api/produto/" + id, null,
+                resposta -> sucesso.executar(converterProduto(resposta)),erro-> falha.executar(mensagemErro(erro))
+        );
+        fila.add(request);
+    }
+    public void criarProduto(Produto produto,Sucesso<Produto> sucesso, Falha falha){
+        JsonObjectRequest request = new JsonObjectRequest(
+                Request.Method.POST,BASE_URL + "/api/produto/", converterJson(produto),
+                resposta -> sucesso.executar(converterProduto(resposta)),
+                erro -> falha.executar(mensagemErro(erro))
+        );
+        fila.add(request);
+    }
 
+    public void atualizarProduto(Produto produto,Sucesso<Produto> sucesso, Falha falha){
+        JsonObjectRequest request = new JsonObjectRequest(
+                Request.Method.PUT,BASE_URL + "/api/produto/" + produto.getId(), converterJson(produto),
+                resposta -> sucesso.executar(converterProduto(resposta)),
+                erro -> falha.executar(mensagemErro(erro))
+        );
+        fila.add(request);
+    }
+    public void excluirProduto(long id, Sucesso<Void>sucesso,Falha falha){
+        StringRequest request = new StringRequest(
+                Request.Method.DELETE,BASE_URL + "?api/produtos/" +id,
+                resposta -> sucesso.executar(null),erro->
+                falha.executar((mensagemErro(erro)))
+        );
+        fila.add(request);
     }
 
     private List<Produto> converterLista(JSONArray array) {
@@ -39,12 +72,12 @@ public class ApiClient {
         for (int i = 0; i < array.length(); i++) {
             JSONObject json = array.optJSONObject(i);
             if (json != null) {
-                produtos.add(convertProduto(json));
+                produtos.add(converterProduto(json));
             }
         }
         return produtos;
     }
-    private Produto convertProduto(JSONObject json) {
+    private Produto converterProduto(JSONObject json) {
         return new Produto(
                 json.optLong("id"),
                 json.optString("nome"),
